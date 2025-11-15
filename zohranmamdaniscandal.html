@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Message</title>
+    
+    <!-- *** Tags to Force Full-Screen/App Mode on iOS/Android *** -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- ************************************************************* -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apply the Inter font and ensure full viewport height */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000; /* True black background for maximum lockdown */
+            transition: background-color 0.5s ease;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Prevents selecting text */
+        }
+        .full-screen-center {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .blank-screen {
+            background-color: #0d1117 !important; /* Slight change to confirm the state change */
+        }
+    </style>
+</head>
+<body id="page-body">
+
+    <div id="app" class="full-screen-center p-4">
+        
+        <!-- This container holds the message and the input, and will be hidden on successful code entry -->
+        <div id="content-container" class="w-full max-w-sm bg-gray-900 p-8 rounded-xl shadow-2xl transition-all duration-500">
+            
+            <!-- START: Displayed Text (Visible immediately) -->
+            <div id="displayed-text">
+                <h2 class="text-3xl font-extrabold mb-4 text-white text-center">Locked Message</h2>
+                
+                <p class="text-gray-300 leading-relaxed text-lg text-center font-mono">
+                    Fuck You Bitch
+                    <br>Now Escape It
+                </p>
+            </div>
+            <!-- END: Displayed Text -->
+
+            <!-- START: Input Area (Visible immediately) -->
+            <div id="code-input-area" class="mt-8 pt-4 border-t border-gray-700">
+                <h1 class="text-xl font-bold text-center mb-4 text-red-400">Enter Code to Release Lockdown</h1>
+                
+                <input type="password" id="secret-input" 
+                       class="w-full p-3 mb-4 text-center text-xl tracking-widest bg-gray-700 text-white rounded-lg border border-gray-600 focus:ring-2 focus:ring-red-500 outline-none" 
+                       placeholder="****"
+                       maxlength="4"
+                       autofocus
+                       onkeypress="if(event.key === 'Enter') checkCode()">
+                
+                <button id="escape-button" onclick="checkCode()" 
+                        class="w-full py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-150 shadow-md">
+                    ESCAPE
+                </button>
+                
+                <p id="error-message" class="text-center text-red-400 mt-4 opacity-0 transition-opacity duration-300">
+                    Incorrect code. Lockdown remains active.
+                </p>
+            </div>
+            <!-- END: Input Area -->
+
+        </div>
+    </div>
+
+    <script>
+        const SECRET_CODE = "0987";
+        const inputField = document.getElementById('secret-input');
+        const contentContainer = document.getElementById('content-container');
+        const errorMessage = document.getElementById('error-message');
+        const pageBody = document.getElementById('page-body');
+
+        // --- Lockdown Mechanism ---
+        
+        // The message shown when the user tries to navigate away
+        const LOCKDOWN_MESSAGE = "The Lockdown is active. You must enter the code to leave this page.";
+
+        // Function that prevents leaving the page
+        function preventUnload(event) {
+            event.returnValue = LOCKDOWN_MESSAGE; 
+            return LOCKDOWN_MESSAGE; 
+        }
+        
+        // This function is the ultimate defense: it triggers the alert if the page loses focus (e.g., app switching)
+        function continuousLockdown() {
+            if (document.visibilityState === 'hidden' && !window.LOCKDOWN_RELEASED) {
+                // If the user tries to leave or switch apps, the alert will pop up when they return
+                // We don't use window.alert() directly here, but rely on 'beforeunload' which fires 
+                // when they attempt to exit.
+                console.log("Page lost focus. Lockdown reinforced.");
+            }
+        }
+
+        // Activate the primary lockdown (preventing navigation) immediately on load.
+        window.addEventListener('beforeunload', preventUnload);
+        
+        // Continuous check for loss of focus (to discourage app switching)
+        document.addEventListener('visibilitychange', continuousLockdown);
+
+        // Global flag to track if the code has been successfully entered
+        window.LOCKDOWN_RELEASED = false;
+
+
+        // --- Escape Logic ---
+
+        /**
+         * Checks the entered code and releases the lockdown if correct.
+         */
+        function checkCode() {
+            const enteredCode = inputField.value.trim();
+            
+            if (enteredCode === SECRET_CODE) {
+                
+                // 1. Set the flag to true to prevent further lockdown attempts
+                window.LOCKDOWN_RELEASED = true;
+
+                // 2. RELEASE THE LOCKDOWN: Remove all navigation blockers
+                window.removeEventListener('beforeunload', preventUnload);
+                document.removeEventListener('visibilitychange', continuousLockdown);
+                
+                // 3. Clear the screen (The "escape" state)
+                contentContainer.style.opacity = '0';
+                pageBody.classList.add('blank-screen');
+                
+                // 4. Completely remove the content container after the transition finishes
+                setTimeout(() => {
+                    contentContainer.classList.add('hidden');
+                }, 500);
+
+            } else {
+                // Incorrect code: Show error message
+                inputField.value = ''; // Clear the input
+                errorMessage.classList.remove('opacity-0');
+                
+                // Hide the error message after 2 seconds
+                setTimeout(() => {
+                    errorMessage.classList.add('opacity-0');
+                }, 2000);
+            }
+        }
+    </script>
+
+</body>
+</html>
+
+
